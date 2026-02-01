@@ -134,7 +134,7 @@ class _FeedScreenState extends State<FeedScreen> {
         children: [
           Expanded(
             child: DropdownButtonFormField<String>(
-              initialValue: _selectedUserId,
+              value: _selectedUserId,
               isExpanded: true,
               decoration: const InputDecoration(
                 labelText: 'User',
@@ -158,7 +158,7 @@ class _FeedScreenState extends State<FeedScreen> {
           const SizedBox(width: 12),
           Expanded(
             child: DropdownButtonFormField<String>(
-              initialValue: _selectedCommunityId,
+              value: _selectedCommunityId,
               isExpanded: true,
               decoration: const InputDecoration(
                 labelText: 'Community',

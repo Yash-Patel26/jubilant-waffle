@@ -119,7 +119,7 @@ class _TournamentRolesTabState extends State<TournamentRolesTab> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 DropdownButtonFormField<String>(
-                  initialValue: selectedUserId,
+                  value: selectedUserId,
                   isExpanded: true,
                   decoration: const InputDecoration(
                     labelText: 'Select Participant',
@@ -139,7 +139,7 @@ class _TournamentRolesTabState extends State<TournamentRolesTab> {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  initialValue: selectedRole,
+                  value: selectedRole,
                   decoration: const InputDecoration(
                     labelText: 'Role',
                     border: OutlineInputBorder(),

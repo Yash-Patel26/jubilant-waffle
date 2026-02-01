@@ -256,7 +256,7 @@ class _TournamentCreationScreenState extends State<TournamentCreationScreen> {
                       border: OutlineInputBorder(),
                       hintText: 'Select a game for your tournament',
                     ),
-                    initialValue: _gameId.isEmpty ? null : _gameId,
+                    value: _gameId.isEmpty ? null : _gameId,
                     items: _games.map<DropdownMenuItem<String>>((game) {
                       return DropdownMenuItem<String>(
                         value: game['id'] as String,

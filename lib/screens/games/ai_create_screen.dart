@@ -281,7 +281,7 @@ What's your most memorable gaming achievement? Drop it in the comments below! ðŸ
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
-              initialValue: _selectedContentType,
+              value: _selectedContentType,
               decoration: InputDecoration(
                 border:
                     OutlineInputBorder(borderRadius: BorderRadius.circular(12)),

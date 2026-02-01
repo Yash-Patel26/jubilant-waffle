@@ -211,7 +211,7 @@ class _AudioPostScreenState extends State<AudioPostScreen> {
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
-              initialValue: _selectedAudioType,
+              value: _selectedAudioType,
               decoration: InputDecoration(
                 border:
                     OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
