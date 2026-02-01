@@ -80,20 +80,43 @@ Go to your GitHub repository → **Settings** → **Secrets and variables** → 
 |-------------|-------------|---------------|
 | `CLOUDFLARE_ZONE_ID` | Zone ID for cache purging | Cloudflare Dashboard → Your domain → Overview → Right sidebar |
 
-## Step 5: Set Up Custom Domain (Optional)
+## Step 5: Connect gamerflick.in (Custom Domain)
 
-### Add Domain to Cloudflare Pages:
-1. Go to **Workers & Pages** → **gamerflick** → **Custom domains**
-2. Click **Set up a custom domain**
-3. Enter your domain (e.g., `app.gamerflick.com`)
-4. Cloudflare will automatically configure DNS
+Deployments go to **gamerflick.pages.dev** by default. To serve the app at **gamerflick.in**:
 
-### DNS Configuration:
-If domain is already on Cloudflare:
-- Automatic CNAME record is created
+### A. Add gamerflick.in to Cloudflare (required for root domain)
 
-If domain is elsewhere:
-- Add CNAME record pointing to `gamerflick.pages.dev`
+1. In **Cloudflare Dashboard** go to **Websites** → **Add a site**.
+2. Enter **gamerflick.in** and choose a plan (Free is enough).
+3. Cloudflare will show you **two nameservers** (e.g. `ada.ns.cloudflare.com` and `bob.ns.cloudflare.com`).
+4. In **GoDaddy**: Domain → **gamerflick.in** → **Manage DNS** (or **Nameservers**):
+   - Change nameservers from GoDaddy to **Custom** and paste Cloudflare’s two nameservers.
+   - Save and wait for propagation (up to 24–48 hours, often quicker).
+5. Back in Cloudflare, click **Check nameservers** until it says the site is active.
+
+### B. Attach gamerflick.in to your Pages project
+
+1. Go to **Workers & Pages** → select project **gamerflick**.
+2. Open **Custom domains**.
+3. Click **Set up a custom domain**.
+4. Type **gamerflick.in** (and optionally **www.gamerflick.in** if you want www).
+5. Click **Continue**; Cloudflare will create the right DNS records in your gamerflick.in zone.
+6. Wait a few minutes; the project will show **Active** when gamerflick.in is correctly linked.
+
+### C. (Optional) www subdomain
+
+- In **Custom domains**, add **www.gamerflick.in**.
+- Cloudflare will add a CNAME for `www` to your Pages project.
+
+### Summary
+
+| Step | Where | Action |
+|------|--------|--------|
+| 1 | GoDaddy | Point **nameservers** for gamerflick.in to Cloudflare’s nameservers. |
+| 2 | Cloudflare | Add site **gamerflick.in** and confirm nameservers. |
+| 3 | Cloudflare Pages | **gamerflick** → **Custom domains** → **Set up a custom domain** → **gamerflick.in**. |
+
+Until Step 5 is done, the app is only available at **gamerflick.pages.dev**, not at **gamerflick.in**. No code or workflow changes are required; this is all configuration in Cloudflare and GoDaddy.
 
 ## Step 6: Test Deployment
 
@@ -218,6 +241,16 @@ flutter pub get
 # Test local build
 flutter build web --release
 ```
+
+### Why isn't production deploying?
+
+| Check | What to do |
+|-------|-------------|
+| **Which branch are you pushing?** | Production deploys only when you push to **main** or **production**, or run the workflow manually and choose **production**. Pushing to **develop** or a feature branch only creates a preview deployment. |
+| **Did the workflow run?** | Pushes that only change `**.md`, `.cursor/**`, or `docs/**` are ignored (paths-ignore). Push a code change or run **Actions → Deploy to Cloudflare Pages → Run workflow** and select branch **main** and environment **production**. |
+| **Did the build job pass?** | If **Build Flutter Web** fails (e.g. `flutter build web` or `flutter test`), the deploy job never runs. Fix errors in the Actions log and re-push. |
+| **Did the Deploy step fail?** | Usually missing or wrong secrets. In repo **Settings → Secrets and variables → Actions** add `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` (see Step 4 above). |
+| **Cloudflare production branch** | In Cloudflare Dashboard → **Workers & Pages → gamerflick → Settings**, ensure **Production branch** is set to **main**. |
 
 ### Deployment Fails
 - Verify `CLOUDFLARE_API_TOKEN` is correct

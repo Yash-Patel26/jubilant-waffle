@@ -1,6 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'game_detail_screen.dart'; // Import the detail screen
+import 'package:flutter/services.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class GamesScreen extends StatefulWidget {
   const GamesScreen({super.key});
@@ -10,20 +13,39 @@ class GamesScreen extends StatefulWidget {
 }
 
 class _GamesScreenState extends State<GamesScreen> {
-  late Future<List<dynamic>> _gamesFuture;
+  late Future<List<Map<String, dynamic>>> _gamesFuture;
 
   @override
   void initState() {
     super.initState();
-    _gamesFuture = _fetchGames();
+    _gamesFuture = _loadPlayGamaGames();
   }
 
-  Future<List<dynamic>> _fetchGames() async {
-    final data = await Supabase.instance.client
-        .from('games')
-        .select()
-        .order('name', ascending: true);
-    return data;
+  /// Load games from PlayGama data in games.json asset.
+  /// Parses segments and flattens hits into a single list.
+  Future<List<Map<String, dynamic>>> _loadPlayGamaGames() async {
+    try {
+      final jsonString = await rootBundle.loadString('games.json');
+      final data = jsonDecode(jsonString) as Map<String, dynamic>;
+      final segments = data['segments'] as List<dynamic>? ?? [];
+      final List<Map<String, dynamic>> allGames = [];
+      for (final segment in segments) {
+        final hits = (segment as Map<String, dynamic>)['hits'] as List<dynamic>? ?? [];
+        for (final hit in hits) {
+          allGames.add(hit as Map<String, dynamic>);
+        }
+      }
+      return allGames;
+    } catch (e) {
+      return [];
+    }
+  }
+
+  Future<void> _openPlayGama(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
   }
 
   @override
@@ -56,14 +78,15 @@ class _GamesScreenState extends State<GamesScreen> {
               ],
             ),
           ),
-          // Games Grid
+          // Games Grid (PlayGama from games.json)
           Expanded(
-            child: FutureBuilder<List<dynamic>>(
+            child: FutureBuilder<List<Map<String, dynamic>>>(
               future: _gamesFuture,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
-                } else if (snapshot.hasError) {
+                }
+                if (snapshot.hasError) {
                   return Center(
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
@@ -73,33 +96,33 @@ class _GamesScreenState extends State<GamesScreen> {
                       ),
                     ),
                   );
-                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                }
+                final games = snapshot.data ?? [];
+                if (games.isEmpty) {
                   return const Center(child: Text('No games found.'));
                 }
 
-                final games = snapshot.data!;
                 return GridView.builder(
                   padding: const EdgeInsets.all(16.0),
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3, // Adjust for desired number of columns
-                    childAspectRatio: 0.75,
+                    crossAxisCount: 3,
+                    childAspectRatio: 0.68,
                     crossAxisSpacing: 16,
                     mainAxisSpacing: 16,
                   ),
                   itemCount: games.length,
                   itemBuilder: (context, index) {
                     final game = games[index];
+                    final title = game['title'] as String? ?? 'Game';
+                    final playgamaUrl = game['playgamaGameUrl'] as String? ?? game['gameURL'] as String? ?? '';
+                    final images = game['images'] as List<dynamic>? ?? [];
+                    final imageUrl = images.isNotEmpty ? images[0] as String? : null;
+
                     return InkWell(
                       onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => GameDetailScreen(
-                              gameId: game['id'],
-                              gameName: game['name'],
-                            ),
-                          ),
-                        );
+                        if (playgamaUrl.isNotEmpty) {
+                          _openPlayGama(playgamaUrl);
+                        }
                       },
                       borderRadius: BorderRadius.circular(12),
                       child: Card(
@@ -111,15 +134,22 @@ class _GamesScreenState extends State<GamesScreen> {
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             Expanded(
-                              child: game['image_url'] != null
-                                  ? Image.network(
-                                      'http://localhost:3000${game['image_url']}', // Assuming image_url needs base URL
+                              child: imageUrl != null && imageUrl.isNotEmpty
+                                  ? CachedNetworkImage(
+                                      imageUrl: imageUrl,
                                       fit: BoxFit.cover,
-                                      errorBuilder:
-                                          (context, error, stackTrace) =>
-                                              const Icon(
-                                        Icons.image_not_supported,
-                                        size: 50,
+                                      placeholder: (_, __) => Container(
+                                        color: Colors.grey.shade800,
+                                        child: const Center(
+                                          child: CircularProgressIndicator(),
+                                        ),
+                                      ),
+                                      errorWidget: (_, __, ___) => Container(
+                                        color: Colors.grey.shade800,
+                                        child: const Icon(
+                                          Icons.sports_esports,
+                                          size: 50,
+                                        ),
                                       ),
                                     )
                                   : Container(
@@ -131,15 +161,30 @@ class _GamesScreenState extends State<GamesScreen> {
                                     ),
                             ),
                             Padding(
-                              padding: const EdgeInsets.all(8.0),
+                              padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 4.0),
                               child: Text(
-                                game['name'],
-                                style: theme.textTheme.bodyMedium?.copyWith(
+                                title,
+                                style: theme.textTheme.bodySmall?.copyWith(
                                   fontWeight: FontWeight.bold,
                                 ),
                                 textAlign: TextAlign.center,
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+                              child: FilledButton.icon(
+                                onPressed: playgamaUrl.isNotEmpty
+                                    ? () => _openPlayGama(playgamaUrl)
+                                    : null,
+                                icon: const Icon(Icons.play_arrow, size: 18),
+                                label: const Text('Play'),
+                                style: FilledButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(vertical: 6),
+                                  minimumSize: Size.zero,
+                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                ),
                               ),
                             ),
                           ],

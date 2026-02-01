@@ -160,7 +160,8 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy build/web --project-name=${{ env.PROJECT_NAME }}
+          # Deploy to production branch (main) when pushing to main or production; otherwise deploy to preview branch
+          command: pages deploy build/web --project-name=${{ env.PROJECT_NAME }} ${{ (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production') && '--branch=main' || format('--branch={0}', github.ref_name) }}
 
       - name: Comment PR with preview URL
         if: github.event_name == 'pull_request'
