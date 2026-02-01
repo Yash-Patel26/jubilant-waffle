@@ -1,0 +1,25 @@
+User-agent: *
+Allow: /
+
+# Disallow admin and private areas
+Disallow: /admin/
+Disallow: /private/
+Disallow: /api/
+Disallow: /_next/
+Disallow: /static/
+
+# Allow important directories
+Allow: /assets/
+Allow: /images/
+Allow: /css/
+Allow: /js/
+
+# Crawl delay for better server performance
+Crawl-delay: 1
+
+# Sitemap location
+Sitemap: https://gamerflick-web.vercel.app/sitemap.xml
+
+# Additional sitemaps for different content types
+Sitemap: https://gamerflick-web.vercel.app/sitemap-games.xml
+Sitemap: https://gamerflick-web.vercel.app/sitemap-tournaments.xml 

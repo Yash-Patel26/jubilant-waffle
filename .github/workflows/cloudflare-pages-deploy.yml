@@ -1,0 +1,274 @@
+# Cloudflare Pages Deployment Workflow
+# Deploys GamerFlick Flutter Web App to Cloudflare Pages
+
+name: Deploy to Cloudflare Pages
+
+on:
+  push:
+    branches:
+      - main
+      - production
+      - develop
+    paths-ignore:
+      - '**.md'
+      - '.cursor/**'
+      - 'docs/**'
+  pull_request:
+    branches:
+      - main
+      - production
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'preview'
+        type: choice
+        options:
+          - preview
+          - production
+
+env:
+  FLUTTER_VERSION: '3.29.0'
+  PROJECT_NAME: gamerflick
+
+jobs:
+  # ============================================
+  # BUILD FLUTTER WEB APP
+  # ============================================
+  build:
+    name: Build Flutter Web
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Analyze code
+        run: flutter analyze --no-fatal-infos
+        continue-on-error: true
+
+      - name: Run tests
+        run: flutter test
+        continue-on-error: true
+
+      - name: Build Web (Production)
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production'
+        run: |
+          flutter build web --release \
+            --dart-define=ENVIRONMENT=production \
+            --base-href /
+
+      - name: Build Web (Preview)
+        if: github.ref != 'refs/heads/main' && github.ref != 'refs/heads/production'
+        run: |
+          flutter build web --release \
+            --dart-define=ENVIRONMENT=staging \
+            --base-href /
+
+      - name: Add Cloudflare headers config
+        run: |
+          # Create _headers file for Cloudflare Pages
+          cat > build/web/_headers << 'EOF'
+          /*
+            X-Frame-Options: DENY
+            X-Content-Type-Options: nosniff
+            X-XSS-Protection: 1; mode=block
+            Referrer-Policy: strict-origin-when-cross-origin
+            Permissions-Policy: camera=(), microphone=(), geolocation=()
+
+          /assets/*
+            Cache-Control: public, max-age=31536000, immutable
+
+          /icons/*
+            Cache-Control: public, max-age=31536000, immutable
+
+          /canvaskit/*
+            Cache-Control: public, max-age=31536000, immutable
+
+          /*.js
+            Cache-Control: public, max-age=86400
+
+          /*.wasm
+            Cache-Control: public, max-age=31536000, immutable
+
+          /index.html
+            Cache-Control: no-cache, no-store, must-revalidate
+
+          /flutter_service_worker.js
+            Cache-Control: no-cache, no-store, must-revalidate
+
+          /manifest.json
+            Cache-Control: no-cache
+          EOF
+
+      - name: Add Cloudflare redirects config
+        run: |
+          # Create _redirects file for SPA routing
+          cat > build/web/_redirects << 'EOF'
+          # SPA fallback - redirect all paths to index.html
+          /*    /index.html   200
+          EOF
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-build
+          path: build/web
+          retention-days: 1
+
+  # ============================================
+  # DEPLOY TO CLOUDFLARE PAGES
+  # ============================================
+  deploy:
+    name: Deploy to Cloudflare
+    needs: build
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read
+      deployments: write
+      pull-requests: write
+
+    outputs:
+      deployment-url: ${{ steps.deploy.outputs.deployment-url }}
+      environment: ${{ steps.deploy.outputs.environment }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: web-build
+          path: build/web
+
+      - name: Deploy to Cloudflare Pages
+        id: deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy build/web --project-name=${{ env.PROJECT_NAME }}
+
+      - name: Comment PR with preview URL
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const deploymentUrl = '${{ steps.deploy.outputs.deployment-url }}';
+            const body = `## 🚀 Cloudflare Pages Deployment
+            
+            | Status | URL |
+            |--------|-----|
+            | ✅ Deployed | [${deploymentUrl}](${deploymentUrl}) |
+            
+            ### Details
+            - **Branch:** \`${{ github.head_ref }}\`
+            - **Commit:** \`${{ github.sha }}\`
+            - **Build:** [View workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            `;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+
+      - name: Output deployment URL
+        run: |
+          echo "## 🚀 Deployment Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**URL:** ${{ steps.deploy.outputs.deployment-url }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+
+  # ============================================
+  # PRODUCTION DEPLOYMENT (requires approval)
+  # ============================================
+  deploy-production:
+    name: Deploy to Production
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/production' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
+    environment:
+      name: production
+      url: ${{ steps.deploy-prod.outputs.deployment-url }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: web-build
+          path: build/web
+
+      - name: Deploy to Production
+        id: deploy-prod
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy build/web --project-name=${{ env.PROJECT_NAME }} --branch=main
+
+      - name: Production deployment summary
+        run: |
+          echo "## 🎉 Production Deployment Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Production URL:** ${{ steps.deploy-prod.outputs.deployment-url }}" >> $GITHUB_STEP_SUMMARY
+
+  # ============================================
+  # LIGHTHOUSE AUDIT
+  # ============================================
+  lighthouse:
+    name: Lighthouse Audit
+    needs: deploy
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Lighthouse
+        uses: treosh/lighthouse-ci-action@v11
+        with:
+          urls: |
+            ${{ needs.deploy.outputs.deployment-url }}
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+          configPath: ./.github/lighthouse/lighthouserc.json
+        continue-on-error: true
+
+  # ============================================
+  # PURGE CLOUDFLARE CACHE (Production only)
+  # ============================================
+  purge-cache:
+    name: Purge Cloudflare Cache
+    needs: deploy-production
+    runs-on: ubuntu-latest
+    if: needs.deploy-production.result == 'success'
+    
+    steps:
+      - name: Purge Cloudflare cache
+        run: |
+          curl -X POST "https://api.cloudflare.com/client/v4/zones/${{ secrets.CLOUDFLARE_ZONE_ID }}/purge_cache" \
+            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            --data '{"purge_everything":true}'
+        continue-on-error: true

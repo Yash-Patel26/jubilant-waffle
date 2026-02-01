@@ -1,0 +1,186 @@
+# GamerFlick - Cursor Rules
+
+You are an AI assistant helping develop GamerFlick, a social gaming platform built with Flutter.
+
+## Project Overview
+
+GamerFlick is a next-generation social gaming platform for gamers to connect, share, and compete. It features:
+- Social feed with posts, stories, and reels
+- Gaming communities with roles and moderation
+- Tournament system with brackets and leaderboards
+- Real-time messaging and notifications
+- Live streaming and StickCam
+- Cross-platform support (iOS, Android, Web, Desktop)
+
+## Tech Stack
+
+- **Framework**: Flutter 3.4.1+ / Dart
+- **State Management**: flutter_riverpod + provider
+- **Backend**: Supabase (PostgreSQL, Auth, Realtime, Storage)
+- **Real-time**: WebSocket, Socket.IO, Supabase Realtime
+- **Media**: video_player, image_picker, flutter_webrtc
+
+## Project Structure
+
+```
+lib/
+├── config/          # App configuration
+├── extensions/      # Dart extensions
+├── models/          # Data models (organized by domain)
+├── providers/       # State management providers
+├── screens/         # Screen widgets (organized by feature)
+├── services/        # Business logic services
+├── theme/           # App theming
+├── utils/           # Utility functions
+└── widgets/         # Reusable widgets
+```
+
+## Code Standards
+
+### Dart/Flutter Conventions
+- Use `const` constructors where possible
+- Prefer `final` for immutable variables
+- Use named parameters with `required` keyword
+- Follow single responsibility principle
+- Implement proper error handling
+
+### Widget Patterns
+```dart
+// Preferred ConsumerStatefulWidget pattern
+class MyScreen extends ConsumerStatefulWidget {
+  const MyScreen({super.key});
+  
+  @override
+  ConsumerState<MyScreen> createState() => _MyScreenState();
+}
+
+class _MyScreenState extends ConsumerState<MyScreen> {
+  @override
+  Widget build(BuildContext context) {
+    final state = ref.watch(someProvider);
+    // ...
+  }
+}
+```
+
+### Service Patterns
+```dart
+// Singleton service pattern
+class MyService {
+  static final MyService _instance = MyService._internal();
+  factory MyService() => _instance;
+  MyService._internal();
+  
+  final _client = Supabase.instance.client;
+  // ...
+}
+```
+
+## Available Agents
+
+Use `@agent-name` to invoke specialized expertise:
+
+- `@flutter-expert` - Flutter SDK, widgets, state management
+- `@mobile-app-developer` - Platform integration, permissions, deployment
+- `@ui-designer` - UI/UX, animations, accessibility
+- `@backend-engineer` - Supabase, database, RLS policies
+- `@database-expert` - PostgreSQL, schema design, optimization
+- `@devops-engineer` - CI/CD, deployment, monitoring
+- `@qa-engineer` - Testing, quality assurance
+- `@security-expert` - Security, encryption, authentication
+- `@realtime-expert` - WebSocket, real-time features, presence
+- `@gaming-features-expert` - Tournaments, leaderboards, achievements
+- `@performance-engineer` - Optimization, profiling, memory
+- `@community-social-expert` - Social features, feeds, moderation
+
+## Design System
+
+### Colors (Dark Theme)
+```dart
+background: Color(0xFF121212)
+surface: Color(0xFF1E1E1E)
+primaryCyan: Color(0xFF00BCD4)
+accentPurple: Color(0xFF9C27B0)
+accentPink: Color(0xFFE91E63)
+```
+
+### Typography
+- Display font: Billabong (branding)
+- Body font: Roboto (content)
+
+## Best Practices
+
+### Performance
+- Use `ListView.builder` for long lists
+- Implement `AutomaticKeepAliveClientMixin` for tabs
+- Use `RepaintBoundary` for animations
+- Cache network images with `CachedNetworkImage`
+
+### Security
+- Store sensitive data in `FlutterSecureStorage`
+- Validate all user inputs
+- Use RLS policies in Supabase
+- Never expose API keys in client code
+
+### State Management
+- Use Riverpod providers for global state
+- Use `ref.watch` for reactive updates
+- Use `ref.read` for one-time reads
+- Dispose controllers properly
+
+## Common Commands
+
+```bash
+# Development
+flutter run
+
+# Build
+flutter build apk --release
+flutter build ios --release
+flutter build web --release
+
+# Testing
+flutter test
+flutter test --coverage
+
+# Code quality
+flutter analyze
+dart format .
+```
+
+## Key Dependencies
+
+```yaml
+supabase_flutter: ^2.3.4
+flutter_riverpod: ^2.4.9
+cached_network_image: ^3.3.1
+video_player: ^2.8.6
+flutter_webrtc: ^0.12.0
+flutter_secure_storage: ^9.0.0
+```
+
+## When Helping
+
+1. Always consider cross-platform compatibility
+2. Follow existing project patterns and structure
+3. Implement proper error handling
+4. Write clean, documented code
+5. Consider performance implications
+6. Ensure accessibility compliance
+7. Test edge cases
+
+## File Naming
+
+- Screens: `feature_screen.dart`
+- Services: `feature_service.dart`
+- Providers: `feature_provider.dart`
+- Models: `feature.dart`
+- Widgets: `feature_widget.dart`
+
+## Important Notes
+
+- Dark mode is the default and primary theme
+- Gaming aesthetics: Use glows, gradients, and animations
+- Real-time features are critical - handle connection states
+- Content moderation is important for community health
+- Performance matters - profile before optimizing

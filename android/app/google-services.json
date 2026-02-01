@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "820358153567",
+    "project_id": "gamerflick-a4434",
+    "storage_bucket": "gamerflick-a4434.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:820358153567:android:7424a2b15424cf3380e2ea",
+        "android_client_info": {
+          "package_name": "com.gamerflick.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCYUwiR4xWWCiGNc_uqRAMyhGQh-Z5CVHE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
