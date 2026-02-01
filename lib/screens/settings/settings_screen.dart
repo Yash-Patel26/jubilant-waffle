@@ -496,7 +496,7 @@ class SettingsScreen extends ConsumerWidget {
   Future<void> _contactSupport(BuildContext context) async {
     final Uri emailLaunchUri = Uri(
       scheme: 'mailto',
-      path: 'dayj793@gmail.com',
+      path: 'support@gamerflick.in',
       query: 'subject=Support Request',
     );
     if (await canLaunchUrl(emailLaunchUri)) {
