@@ -142,7 +142,7 @@ class _CreateReelScreenState extends rp.ConsumerState<CreateReelScreen> {
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                initialValue: style,
+                value: style,
                 decoration: const InputDecoration(border: OutlineInputBorder()),
                 items: const [
                   DropdownMenuItem(value: 'white', child: Text('White')),
@@ -645,7 +645,7 @@ class _CreateReelScreenState extends rp.ConsumerState<CreateReelScreen> {
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
-          initialValue: selectedValue,
+          value: selectedValue,
           decoration: const InputDecoration(
             border: OutlineInputBorder(),
           ),

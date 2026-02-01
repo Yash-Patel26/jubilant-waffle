@@ -548,7 +548,7 @@ class _FilterDialogState extends State<_FilterDialog> {
     return Column(
       children: [
         DropdownButtonFormField<String>(
-          initialValue: _sortBy,
+          value: _sortBy,
           decoration: const InputDecoration(labelText: 'Sort Field'),
           items: const [
             DropdownMenuItem(value: 'created_at', child: Text('Date Created')),
@@ -566,7 +566,7 @@ class _FilterDialogState extends State<_FilterDialog> {
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
-          initialValue: _sortOrder,
+          value: _sortOrder,
           decoration: const InputDecoration(labelText: 'Sort Order'),
           items: const [
             DropdownMenuItem(value: 'asc', child: Text('Ascending')),

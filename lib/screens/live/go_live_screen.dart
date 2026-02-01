@@ -161,7 +161,7 @@ class _GoLiveScreenState extends State<GoLiveScreen> {
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
-              initialValue: _selectedPrivacy,
+              value: _selectedPrivacy,
               decoration: InputDecoration(
                 border:
                     OutlineInputBorder(borderRadius: BorderRadius.circular(12)),

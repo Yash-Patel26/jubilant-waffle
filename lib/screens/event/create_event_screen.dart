@@ -402,7 +402,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
-              initialValue: _selectedCategory,
+              value: _selectedCategory,
               decoration: InputDecoration(
                 border:
                     OutlineInputBorder(borderRadius: BorderRadius.circular(12)),

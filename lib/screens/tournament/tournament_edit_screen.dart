@@ -263,7 +263,7 @@ class _TournamentEditScreenState extends State<TournamentEditScreen> {
                         contentPadding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 12),
                       ),
-                      initialValue: _type,
+                      value: _type,
                       items: const [
                         DropdownMenuItem(value: 'solo', child: Text('Solo')),
                         DropdownMenuItem(value: 'team', child: Text('Team')),
