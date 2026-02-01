@@ -181,6 +181,30 @@ The workflow configures:
 - No cache for HTML and service worker
 - CanvasKit renderer for better performance
 
+## Workflow Failure Guide
+
+### Why workflows fail (common causes)
+
+| Workflow | Failure point | Fix |
+|----------|----------------|-----|
+| **Deploy to Cloudflare Pages** | **Deploy** job fails with "Secret not found" or empty token | Add repo secrets: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` (see Step 4 above). |
+| **Deploy to Cloudflare Pages** | **Build** job fails at `flutter pub get` | Dependency resolution error: run `flutter pub get` locally, fix `pubspec.yaml` or version constraints. |
+| **Deploy to Cloudflare Pages** | **Build** job fails at `flutter build web` | Ensure `lib/config/environment.dart` has `defaultValue` for all `String.fromEnvironment()` (CI doesn't pass secrets to dart-define). |
+| **Deploy to Cloudflare Pages** | **Build** job fails at `flutter test` | Tests are `continue-on-error: true` so they don't fail the job; fix tests locally with `flutter test`. |
+| **CodeQL Advanced** | "We were unable to automatically build your code" | This repo uses Flutter (no standard root build). CodeQL workflow uses `build-mode: none` for c-cpp, java-kotlin, swift to avoid autobuild. |
+| **Lighthouse** (on PRs) | Fails or empty URL | Runs after deploy; needs `needs.deploy.outputs.deployment-url`. If deploy was skipped or failed, Lighthouse is skipped. |
+| **Claude Code Review** | Job fails with auth error | Add repo secret `ANTHROPIC_API_KEY` (get key from [console.anthropic.com](https://console.anthropic.com)). |
+
+### Required secrets (all workflows)
+
+**Cloudflare Pages:**
+- `CLOUDFLARE_API_TOKEN` – **required** for deploy; without it the **deploy** step fails.
+- `CLOUDFLARE_ACCOUNT_ID` – **required** for deploy.
+- `CLOUDFLARE_ZONE_ID` – **optional**; only for purge-cache (production).
+
+**Claude Code Review** (`.github/workflows/claude-code-review.yml`):
+- `ANTHROPIC_API_KEY` – **required** for automated PR code review; create at [console.anthropic.com](https://console.anthropic.com).
+
 ## Troubleshooting
 
 ### Build Fails
